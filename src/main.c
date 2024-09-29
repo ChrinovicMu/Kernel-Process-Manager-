@@ -38,7 +38,7 @@ struct Process{
     struct Context context;
 };
 void push_P(struct Process * p){
-    struct Mem_Block *b = (struct Block*) malloc(sizeof(struct Block));
+    struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
     if (!b){
         fprintf(stderr,"allocation failed\n");
         exit(1);
@@ -47,21 +47,21 @@ void push_P(struct Process * p){
         fprintf(stderr, "process not ready for execution\n");
         exit(1);
     }
-    if((kernel_stack_used + p->size) > (_LIMIT * sizeof(uint64_t)){
+    if((kernel_stack_used + p->size) > (_LIMIT * sizeof(uint64_t))){
         fprintf(stderr, "Memory Full\n");
     }
     kernel_stack_used += p->size;
-    b->proc->p;
-    b->next = NULL;
-    bmanagneg->next = top;
+    b->process = p;
+    b->next_b = NULL;
+    b->next_b = top;
     top = b;
 }
 void run_P(struct Process *p){
-    if (process->state != READY){
+    if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
     }
     p->state = RUNNING;
-    printf("process : %d\n"), p->pid);
+    printf("process : %d\n", p->pid);
 }
 void *thread_func(void *arg){
     struct Process *p = (struct Process)arg;
@@ -84,13 +84,17 @@ void run_process_thread(struct Process *p){
         exit(1);
     }
 }
-void run_next(){
-    struct Process *temp_p;
-    if(p->next == NULL){
-        fprintf(stderr, "\n");
+void run_next_b(int pid){
+    struct Mem_Block *temp_p;
+    temp_p = top;
+    while(temp_p->process->pid != pid){
+        temp_p = temp_p->next_b;
     }
-    p->state = SLEEPING;
-    temp_p = p->next;
+    if(p->next_b == NULL){
+        fprintf(stderr, "No process after"\n);
+    }
+    temp->state = SLEEPING;
+    temp_p = p->next_b;
     run_P(temp_p);
 }
 
