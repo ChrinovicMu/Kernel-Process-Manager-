@@ -6,11 +6,13 @@
 #include <errno.h>
 #define _LIMIT 1000
 
+#define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
+
 struct Mem_Block{
     struct Process* process;
-    struct Node *next_b;
+    struct Mem_Block *next_b;
 }*top = NULL;
-uint64_t kernel_stack_mem = (uint64_t *) malloc(sizeof(uint64_t) * 1000);
+struct Mem_Block* kernel_stack_mem;
 static size_t kernel_stack_used = 0;
 
 struct Context{
@@ -47,10 +49,10 @@ void push_P(struct Process * p){
         fprintf(stderr, "process not ready for execution\n");
         exit(1);
     }
-    if((kernel_stack_used + p->size) > (_LIMIT * sizeof(uint64_t))){
+    if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (_LIMIT * sizeof(uint64_t))){
         fprintf(stderr, "Memory Full\n");
     }
-    kernel_stack_used += p->size;
+    kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
     b->next_b = NULL;
     b->next_b = top;
@@ -64,7 +66,7 @@ void run_P(struct Process *p){
     printf("process : %d\n", p->pid);
 }
 void *thread_func(void *arg){
-    struct Process *p = (struct Process)arg;
+    struct Process *p = (struct Process*)arg;
     pthread_t thread;
     run_P(p);
     return NULL;
@@ -84,22 +86,23 @@ void run_process_thread(struct Process *p){
         exit(1);
     }
 }
-void run_next_b(int pid){
+/*void run_next_b(int pid){
     struct Mem_Block *temp_p;
     temp_p = top;
     while(temp_p->process->pid != pid){
         temp_p = temp_p->next_b;
     }
     if(p->next_b == NULL){
-        fprintf(stderr, "No process after"\n);
+        fprintf(stderr, "No process after\n");
     }
-    temp->state = SLEEPING;
+    temp_p->state = SLEEPING;
     temp_p = p->next_b;
     run_P(temp_p);
-}
+}*/
 
 int main(int argc, char *argv[])
 {
+    struct Mem_Block *kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
 
 }
 
