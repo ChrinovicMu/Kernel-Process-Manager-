@@ -6,8 +6,9 @@ clean:
 	rm main
 
 .PHONY: git-push
+
 git-push:
 	@git add .
 	@read -p "commit msg : " msg; \
-	git commit -m "$$msg"
-	@git push origin main
+	git commit -m "$$msg"; \
+	git push origin main
