@@ -8,6 +8,7 @@
 #define _LIMIT 1000
 
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
+pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct Mem_Block{
     struct Process* process;
@@ -30,6 +31,7 @@ enum P_State{
     RUNNING,
     SLEEPING,
     UNSED,
+    FINISHED,
 };
 struct Process{
     unsigned int size;
@@ -40,32 +42,48 @@ struct Process{
     struct Context context;
 };
 void push_P(struct Process * p){
+    pthread_mutex_unlock(&process_mutex);
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
     if (!b){
         fprintf(stderr,"allocation failed\n");
+        pthread_mutex_unlock(&process_mutex);
         exit(1);
     }
     if (p->state !=READY){
         fprintf(stderr, "process not ready for execution\n");
+        pthread_mutex_unlock(&process_mutex);
         exit(1);
     }
     if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (_LIMIT * sizeof(uint64_t))){
+        pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
+        exit(1);
     }
     kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
     b->next_b = NULL;
     b->next_b = top;
     top = b;
+    pthread_mutex_unlock(&process_mutex);
 }
 void run_P(struct Process *p){
+    pthread_mutex_unlock(&process_mutex);
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
     }
-   while(p->state = RUNNING){
-        printf("process : %d\n", p->pid);
-        sleep(1);
+    p->state = RUNNING;
+    pthread_mutex_unlock(&process_mutex);
+
+    int execution_time = 100;
+    size_t x;
+    for (x = 0; x < execution_time; ++x){
+        printf("process : %d -> RUNNING\n", p->pid);
+        sleep(2);
     }
+    pthread_mutex_unlock(&process_mutex);
+    p->state = FINISHED;
+    printf("process : %d -> FINISHED\n", p->pid);
+    pthread_mutex_unlock(&process_mutex);
 }
 void *thread_func(void *arg){
     struct Process *p = (struct Process*)arg;
@@ -87,6 +105,7 @@ void run_process_thread(struct Process *p){
         fprintf(stderr, "Error joining thread : %d\n", ret);
         exit(1);
     }
+    pthread_detach(thread);
 }
 struct Process * creatProcess(int id, size_t psize){
 
@@ -108,17 +127,28 @@ struct Process * creatProcess(int id, size_t psize){
 int main(int argc, char *argv[])
 {
     struct Mem_Block *kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
-    
+    if (kernel_stack_mem == NULL){
+        fprintf(stderr, "failed to allocate kernel memory\n");
+        exit(1);
+    }
     struct Process *p1 = NULL;
-    p1 = creatProcess(1234, 1000);
+    struct Process *p2 = NULL;
 
-    if(!p1){
+    p1 = creatProcess(1234, 1000);
+    p2 = creatProcess(9876, 1000);
+    if(!p1 || !p2){
         fprintf(stderr, "memory allocation of process failed\n");
         free(p1);
+        free(p2);
     }
     p1->state = READY;
+    p2->state = READY;
+
+
     push_P(p1);
+    push_P(p2);
     run_process_thread(p1);
+    run_process_thread(p2);
 
 
 }
