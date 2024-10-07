@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <errno.h>
+#include <unistd.h>
 #define _LIMIT 1000
 
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
@@ -31,7 +32,6 @@ enum P_State{
     UNSED,
 };
 struct Process{
-    char *mem;
     unsigned int size;
     enum P_State state;
     int pid;
@@ -62,8 +62,10 @@ void run_P(struct Process *p){
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
     }
-    p->state = RUNNING;
-    printf("process : %d\n", p->pid);
+   while(p->state = RUNNING){
+        printf("process : %d\n", p->pid);
+        sleep(1);
+    }
 }
 void *thread_func(void *arg){
     struct Process *p = (struct Process*)arg;
@@ -86,23 +88,38 @@ void run_process_thread(struct Process *p){
         exit(1);
     }
 }
-/*void run_next_b(int pid){
-    struct Mem_Block *temp_p;
-    temp_p = top;
-    while(temp_p->process->pid != pid){
-        temp_p = temp_p->next_b;
-    }
-    if(p->next_b == NULL){
-        fprintf(stderr, "No process after\n");
-    }
-    temp_p->state = SLEEPING;
-    temp_p = p->next_b;
-    run_P(temp_p);
-}*/
+struct Process * creatProcess(int id, size_t psize){
 
+    struct Context context = {12, 13, 3,0,0,0,0};
+    struct Process *p = (struct Process *)malloc(sizeof(struct Process));
+    if(!p){
+        fprintf(stderr, "memory allocation of process failed\n");
+        exit(1);
+    }
+    p->size = psize;
+    p->state = UNSED;
+    p->pid = id;
+    p->slp = 0;
+    p->kill = 0;
+    p->context = context;
+
+    return (p);
+}
 int main(int argc, char *argv[])
 {
     struct Mem_Block *kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
+    
+    struct Process *p1 = NULL;
+    p1 = creatProcess(1234, 1000);
+
+    if(!p1){
+        fprintf(stderr, "memory allocation of process failed\n");
+        free(p1);
+    }
+    p1->state = READY;
+    push_P(p1);
+    run_process_thread(p1);
+
 
 }
 
