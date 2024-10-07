@@ -1,5 +1,5 @@
 build:
-	gcc -g -std=c99 src/*.c -o main
+	gcc -g -std=c99 src/*.c -pthread -o main
 run:
 	./main
 clean:
