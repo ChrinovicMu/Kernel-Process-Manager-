@@ -17,7 +17,7 @@ struct Mem_Block{
 }*top = NULL;
 
 struct Mem_Block* kernel_stack_mem;     //overall kernel memory 
-static size_t kernel_stack_used = 0;    //counter od how much memory is used 
+static size_t kernel_stack_used = 0;    //counter of how much memory has been used 
 
 //process's register usage 
 struct Context{
