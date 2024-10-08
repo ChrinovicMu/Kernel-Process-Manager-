@@ -22,7 +22,7 @@ Below is a breakdown of thw key Functions in the main code:
 
 ### creatProcess()
 -creates a single process, taking in process id and size as arguments.  
--Note : 'using size' and 'process id' just for testing , will fix later
+-Note : using 'size' and 'process id' arguments are just for testing , will fix later
 
 ### push_P()
 -pushes a process onto the kernel stack if conditions have been met
