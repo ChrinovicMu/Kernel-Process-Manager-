@@ -124,9 +124,12 @@ struct Process * creatProcess(int id, size_t psize){
 
     return (p);
 }
+void kill_P(struct Process *p){
+    //TODO: kills process and free up memory
+}
 int main(int argc, char *argv[])
 {
-    struct Mem_Block *kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
+    kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
     if (kernel_stack_mem == NULL){
         fprintf(stderr, "failed to allocate kernel memory\n");
         exit(1);
