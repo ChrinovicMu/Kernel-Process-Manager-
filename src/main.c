@@ -127,7 +127,7 @@ void run_process_thread(struct Process *p){
 
 struct Process * creatProcess(int id, size_t psize){
 
-    struct Context context = {12, 13, 3,0,0,0,0};
+    struct Context context = {12, 13, 3,0,0,0,0};    //arbitury test values
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
     if(!p){
         fprintf(stderr, "memory allocation of process failed\n");
