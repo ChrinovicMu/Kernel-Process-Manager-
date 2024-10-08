@@ -10,13 +10,16 @@
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
 pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+//process memory space 
 struct Mem_Block{
     struct Process* process;
     struct Mem_Block *next_b;
 }*top = NULL;
-struct Mem_Block* kernel_stack_mem;
-static size_t kernel_stack_used = 0;
 
+struct Mem_Block* kernel_stack_mem;     //overall kernel memory 
+static size_t kernel_stack_used = 0;    //counter od how much memory is used 
+
+//process's register usage 
 struct Context{
     int eip;
     int esp;
@@ -26,6 +29,8 @@ struct Context{
     int edi;
     int ebp;
 };
+
+//state of process
 enum P_State{
     READY,
     RUNNING,
@@ -33,17 +38,22 @@ enum P_State{
     UNSED,
     FINISHED,
 };
+
+//process structure 
 struct Process{
-    unsigned int size;
-    enum P_State state;
-    int pid;
-    int slp : 1;
-    int kill: 1;
-    struct Context context;
+    unsigned int size;      //size of process
+    enum P_State state;     //state
+    int pid;                //process id 
+    int slp : 1;            //ignore 
+    int kill: 1;            //ignore 
+    struct Context context; // register usage
 };
+
 void push_P(struct Process * p){
+
     pthread_mutex_unlock(&process_mutex);
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
+    
     if (!b){
         fprintf(stderr,"allocation failed\n");
         pthread_mutex_unlock(&process_mutex);
@@ -66,7 +76,9 @@ void push_P(struct Process * p){
     top = b;
     pthread_mutex_unlock(&process_mutex);
 }
+
 void run_P(struct Process *p){
+
     pthread_mutex_unlock(&process_mutex);
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
@@ -76,22 +88,27 @@ void run_P(struct Process *p){
 
     int execution_time = 100;
     size_t x;
+
     for (x = 0; x < execution_time; ++x){
         printf("process : %d -> RUNNING\n", p->pid);
         sleep(2);
     }
+
     pthread_mutex_unlock(&process_mutex);
     p->state = FINISHED;
     printf("process : %d -> FINISHED\n", p->pid);
     pthread_mutex_unlock(&process_mutex);
 }
+
 void *thread_func(void *arg){
     struct Process *p = (struct Process*)arg;
     pthread_t thread;
     run_P(p);
     return NULL;
 }
+
 void run_process_thread(struct Process *p){
+
     pthread_t thread;
     int ret;
 
@@ -107,6 +124,7 @@ void run_process_thread(struct Process *p){
     }
     pthread_detach(thread);
 }
+
 struct Process * creatProcess(int id, size_t psize){
 
     struct Context context = {12, 13, 3,0,0,0,0};
