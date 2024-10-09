@@ -35,7 +35,7 @@ enum P_State{
     READY,
     RUNNING,
     SLEEPING,
-    UNSED,
+    UNUSED,
     FINISHED,
 };
 
@@ -135,7 +135,7 @@ struct Process * creatProcess(int id, size_t psize){
         return NULL;
     }
     p->size = psize;
-    p->state = UNSED;
+    p->state = UNUSED;
     p->pid = id;
     p->slp = 0;
     p->kill = 0;
@@ -165,7 +165,6 @@ int main(int argc, char *argv[])
     }
     p1->state = READY;
     p2->state = READY;
-
 
     push_P(p1);
     push_P(p2);
