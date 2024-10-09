@@ -57,17 +57,17 @@ void push_P(struct Process * p){
     if (!b){
         fprintf(stderr,"allocation failed\n");
         pthread_mutex_unlock(&process_mutex);
-        exit(1);
+        return; 
     }
     if (p->state !=READY){
         fprintf(stderr, "process not ready for execution\n");
         pthread_mutex_unlock(&process_mutex);
-        exit(1);
+        return;
     }
     if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (_LIMIT * sizeof(uint64_t))){
         pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
-        exit(1);
+        return;
     }
     kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
@@ -82,6 +82,7 @@ void run_P(struct Process *p){
     pthread_mutex_unlock(&process_mutex);
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
+        return;
     }
     p->state = RUNNING;
     pthread_mutex_unlock(&process_mutex);
@@ -115,12 +116,12 @@ void run_process_thread(struct Process *p){
     ret = pthread_create(&thread, NULL, thread_func, (void *) p);
     if(ret){
         fprintf(stderr, "Error creating thread : %d\n", ret);;
-        exit(1);
+        return;
     }
     ret = pthread_join(thread, NULL);
     if(ret){
         fprintf(stderr, "Error joining thread : %d\n", ret);
-        exit(1);
+        return;
     }
     pthread_detach(thread);
 }
