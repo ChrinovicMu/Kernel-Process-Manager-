@@ -87,7 +87,7 @@ void run_P(struct Process *p){
     p->state = RUNNING;
     pthread_mutex_unlock(&process_mutex);
 
-    int execution_time = 100;
+    int execution_time = 10;
     size_t x;
 
     for (x = 0; x < execution_time; ++x){
@@ -97,7 +97,7 @@ void run_P(struct Process *p){
 
     pthread_mutex_unlock(&process_mutex);
     p->state = FINISHED;
-    printf("process : %d -> FINISHED\n", p->pid);
+    printf("process : %d -> FINISHED\n\n", p->pid);
     pthread_mutex_unlock(&process_mutex);
 }
 
@@ -173,7 +173,5 @@ int main(int argc, char *argv[])
     run_process_thread(p1);
     run_process_thread(p2);
     free(kernel_stack_mem);
-
-
 }
 
