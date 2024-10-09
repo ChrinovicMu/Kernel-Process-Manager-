@@ -131,7 +131,7 @@ struct Process * creatProcess(int id, size_t psize){
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
     if(!p){
         fprintf(stderr, "memory allocation of process failed\n");
-        exit(1);
+        return NULL;
     }
     p->size = psize;
     p->state = UNSED;
