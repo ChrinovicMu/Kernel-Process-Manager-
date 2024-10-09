@@ -162,6 +162,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "memory allocation of process failed\n");
         free(p1);
         free(p2);
+        free(kernel_stack_mem);
+        return -1;
     }
     p1->state = READY;
     p2->state = READY;
@@ -170,6 +172,7 @@ int main(int argc, char *argv[])
     push_P(p2);
     run_process_thread(p1);
     run_process_thread(p2);
+    free(kernel_stack_mem);
 
 
 }
