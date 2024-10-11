@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
-#define _LIMIT 1000
+#define ONE_MB 1000000
 
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
 pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -16,8 +16,12 @@ struct Mem_Block{
     struct Mem_Block *next_b;
 }*top = NULL;
 
-struct Mem_Block* kernel_stack_mem;     //overall kernel memory 
-static size_t kernel_stack_used = 0;    //counter of how much memory has been used 
+/*struct Kernel_Info{
+    size_t kernel_stack_mem;
+    size_t kernel_stack_used;
+*/
+static size_t kernel_stack_mem = ONE_MB;   //overall kernel memory 
+static size_t kernel_stack_used = 0;        //counter of how much memory has been used 
 
 //process's register usage 
 struct Context{
@@ -64,7 +68,7 @@ void push_P(struct Process * p){
         pthread_mutex_unlock(&process_mutex);
         return;
     }
-    if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (_LIMIT * sizeof(uint64_t))){
+    if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_mem)){
         pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
         return;
@@ -92,7 +96,7 @@ void run_P(struct Process *p){
 
     for (x = 0; x < execution_time; ++x){
         printf("process : %d -> RUNNING\n", p->pid);
-        sleep(2);
+        sleep(1);
     }
 
     pthread_mutex_unlock(&process_mutex);
@@ -144,15 +148,15 @@ struct Process * creatProcess(int id, size_t psize){
     return (p);
 }
 void kill_P(struct Process *p){
-    //TODO: kills process and free up memory
+    
 }
 int main(int argc, char *argv[])
 {
-    kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
+   /* kernel_stack_mem = (struct Mem_Block*) malloc(sizeof(struct Mem_Block) * _LIMIT);
     if (kernel_stack_mem == NULL){
         fprintf(stderr, "failed to allocate kernel memory\n");
         exit(1);
-    }
+    }*/
     struct Process *p1 = NULL;
     struct Process *p2 = NULL;
 
@@ -162,7 +166,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "memory allocation of process failed\n");
         free(p1);
         free(p2);
-        free(kernel_stack_mem);
         return -1;
     }
     p1->state = READY;
@@ -172,6 +175,19 @@ int main(int argc, char *argv[])
     push_P(p2);
     run_process_thread(p1);
     run_process_thread(p2);
-    free(kernel_stack_mem);
+
+    printf("BEFORE FREE\n");
+    printf("kernel stack memory : %d\n", kernel_stack_mem);
+    printf("kernel memory used : %d\n", kernel_stack_used);
+
+    free(p1);
+    free(p2);
+
+
+    printf("AFTER FREE\n");
+    printf("kernel stack memory : %d\n", kernel_stack_mem);
+    printf("kernel memory used : %d\n", kernel_stack_used);
+
+
 }
 
