@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
-#define ONE_MB 1000000
+#define ONE_MB 1024
 
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
 pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -130,7 +130,7 @@ void run_process_thread(struct Process *p){
     pthread_detach(thread);
 }
 
-struct Process * creatProcess(int id, size_t psize){
+struct Process * creatProcess(int id){
 
     struct Context context = {12, 13, 3,0,0,0,0};    //arbitury test values
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
@@ -138,7 +138,7 @@ struct Process * creatProcess(int id, size_t psize){
         fprintf(stderr, "memory allocation of process failed\n");
         return NULL;
     }
-    p->size = psize;
+    p->size = sizeof(p);
     p->state = UNUSED;
     p->pid = id;
     p->slp = 0;
@@ -148,7 +148,12 @@ struct Process * creatProcess(int id, size_t psize){
     return (p);
 }
 void kill_P(struct Process *p){
-    
+    if(p->state != FINISHED){
+        fprintf(stderr, "Process is not on stack\n");
+        return;
+    }
+    kernel_stack_used = kernel_stack_used - (MEM_BLOCK_SIZE + p->size);
+    free(p);
 }
 int main(int argc, char *argv[])
 {
@@ -160,8 +165,8 @@ int main(int argc, char *argv[])
     struct Process *p1 = NULL;
     struct Process *p2 = NULL;
 
-    p1 = creatProcess(1234, 1000);
-    p2 = creatProcess(9876, 1000);
+    p1 = creatProcess(3333);
+    p2 = creatProcess(9999);
     if(!p1 || !p2){
         fprintf(stderr, "memory allocation of process failed\n");
         free(p1);
@@ -176,17 +181,15 @@ int main(int argc, char *argv[])
     run_process_thread(p1);
     run_process_thread(p2);
 
-    printf("BEFORE FREE\n");
+    printf("BEFORE KILL :\n");
     printf("kernel stack memory : %d\n", kernel_stack_mem);
-    printf("kernel memory used : %d\n", kernel_stack_used);
+    printf("kernel memory used : %d\n\n", kernel_stack_used);
 
-    free(p1);
-    free(p2);
+    kill_P(p1);
 
-
-    printf("AFTER FREE\n");
+    printf("AFTER KILL : \n");
     printf("kernel stack memory : %d\n", kernel_stack_mem);
-    printf("kernel memory used : %d\n", kernel_stack_used);
+    printf("kernel memory used : %d\n\n", kernel_stack_used);
 
 
 }
