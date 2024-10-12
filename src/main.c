@@ -186,6 +186,7 @@ int main(int argc, char *argv[])
     printf("kernel memory used : %d\n\n", kernel_stack_used);
 
     kill_P(p1);
+    kill_P(p2);
 
     printf("AFTER KILL : \n");
     printf("kernel stack memory : %d\n", kernel_stack_mem);
