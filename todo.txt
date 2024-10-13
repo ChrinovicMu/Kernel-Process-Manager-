@@ -1,5 +1,9 @@
 TODO:
 
-2024/10/12
- --find a way to free up Mem_Block allocated memory for each individual process
+-implemnt effective kill function                                                           1 
+-run the threads in parllel                                                                 1
+-find a way to free up Mem_Block allocated memory for each individual process               0
+-implment scheduler                                                                         0
+_implement context switch                                                                   0
+
 

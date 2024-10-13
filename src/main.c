@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <unistd.h>
-#define ONE_MB 1024
+#define MEMORY_LIMIT 1024
 
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
 pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -16,12 +16,13 @@ struct Mem_Block{
     struct Mem_Block *next_b;
 }*top = NULL;
 
-/*struct Kernel_Info{
+//infomation on memory 
+struct Kernel_Info{
     size_t kernel_stack_mem;
     size_t kernel_stack_used;
-*/
-static size_t kernel_stack_mem = ONE_MB;   //overall kernel memory 
-static size_t kernel_stack_used = 0;        //counter of how much memory has been used 
+};
+//static size_t kernel_stack_mem = ONE_MB;   //overall kernel memory 
+//static size_t kernel_stack_used = 0;        //counter of how much memory has been used 
 
 //process's register usage 
 struct Context{
@@ -53,7 +54,7 @@ struct Process{
     struct Context context; // register usage
 };
 
-void push_P(struct Process * p){
+void push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
     pthread_mutex_unlock(&process_mutex);
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
@@ -68,12 +69,12 @@ void push_P(struct Process * p){
         pthread_mutex_unlock(&process_mutex);
         return;
     }
-    if((kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_mem)){
+    if((kernel_stack_info->kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_info->kernel_stack_mem)){
         pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
         return;
     }
-    kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
+    kernel_stack_info->kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
     b->next_b = NULL;
     b->next_b = top;
@@ -112,22 +113,26 @@ void *thread_func(void *arg){
     return NULL;
 }
 
-void run_process_thread(struct Process *p){
+void run_process_threads(struct Process *p1, struct Process *p2){
+    
+    pthread_t thread1; 
+    pthread_t thread2;
+    int t_err;
 
-    pthread_t thread;
-    int ret;
-
-    ret = pthread_create(&thread, NULL, thread_func, (void *) p);
-    if(ret){
-        fprintf(stderr, "Error creating thread : %d\n", ret);;
+    t_err = pthread_create(&thread1, NULL, thread_func, (void *)p1);
+    if(t_err != 0){
+        fprintf(stderr,"Error creating threads\n");
         return;
     }
-    ret = pthread_join(thread, NULL);
-    if(ret){
-        fprintf(stderr, "Error joining thread : %d\n", ret);
+    t_err = pthread_create(&thread2, NULL, thread_func, (void *)p2);
+    if(t_err != 0){
+        fprintf(stderr, "Error creating threads\n");
         return;
     }
-    pthread_detach(thread);
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    pthread_mutex_destroy(&process_mutex);
 }
 
 struct Process * creatProcess(int id){
@@ -147,12 +152,12 @@ struct Process * creatProcess(int id){
 
     return (p);
 }
-void kill_P(struct Process *p){
+void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
     if(p->state != FINISHED){
         fprintf(stderr, "Process is not on stack\n");
         return;
     }
-    kernel_stack_used = kernel_stack_used - (MEM_BLOCK_SIZE + p->size);
+    kernel_stack_info->kernel_stack_used = kernel_stack_info->kernel_stack_used - (MEM_BLOCK_SIZE + p->size);
     free(p);
 }
 int main(int argc, char *argv[])
@@ -162,6 +167,13 @@ int main(int argc, char *argv[])
         fprintf(stderr, "failed to allocate kernel memory\n");
         exit(1);
     }*/
+    struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
+    if (kernel_stack_info == NULL){
+        fprintf(stderr,"Error allocating kernel info memory");
+        exit(1);
+    }
+    kernel_stack_info->kernel_stack_mem = MEMORY_LIMIT;
+    kernel_stack_info->kernel_stack_used = 0;
     struct Process *p1 = NULL;
     struct Process *p2 = NULL;
 
@@ -176,21 +188,25 @@ int main(int argc, char *argv[])
     p1->state = READY;
     p2->state = READY;
 
-    push_P(p1);
-    push_P(p2);
-    run_process_thread(p1);
-    run_process_thread(p2);
+    push_P(p1, kernel_stack_info);
+    push_P(p2, kernel_stack_info);
 
+    struct Process *p_Array[] = {p1, p2};
+    size_t len = sizeof(p_Array) / sizeof(p_Array[0]);
+
+    run_process_threads(p1, p2);
+
+    //JUST FOR ANALYSIS AND TESTING OF Kill_p()
     printf("BEFORE KILL :\n");
-    printf("kernel stack memory : %d\n", kernel_stack_mem);
-    printf("kernel memory used : %d\n\n", kernel_stack_used);
+    printf("kernel stack memory : %d\n", kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
 
-    kill_P(p1);
-    kill_P(p2);
+    kill_P(p1, kernel_stack_info);
+    kill_P(p2, kernel_stack_info);
 
     printf("AFTER KILL : \n");
-    printf("kernel stack memory : %d\n", kernel_stack_mem);
-    printf("kernel memory used : %d\n\n", kernel_stack_used);
+    printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
 
 
 }
