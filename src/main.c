@@ -231,6 +231,8 @@ int main(int argc, char *argv[])
 
     kill_P(p1, kernel_stack_info);
     kill_P(p2, kernel_stack_info);
+    kill_P(p3, kernel_stack_info);
+    kill_P(p4, kernel_stack_info);
 
     printf("AFTER KILL : \n");
     printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
