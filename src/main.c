@@ -123,14 +123,14 @@ void run_process_threads(struct Process *p_array[], size_t len){
     int x, t_err; 
 
     for(x = 0; x < len; ++x){
-        pthread_create(&thread_arr[x], NULL, thread_func, p_array[x]);
+       t_err = pthread_create(&thread_arr[x], NULL, thread_func, p_array[x]);
         if(t_err != 0){
             fprintf(stderr, "Error creating threads\n");
             return; 
         }
     }
     for(x = 0; x < len; ++x){
-        pthread_join(thread_arr[x], NULL);
+        t_err = pthread_join(thread_arr[x], NULL);
         if(t_err != 0){
             fprintf(stderr, "Error joinning threads\n");
             return;
