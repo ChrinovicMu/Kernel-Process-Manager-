@@ -158,13 +158,6 @@ struct Process * creatProcess(unsigned int id){
 }
 void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
 
-  /*  if(p->state != FINISHED){
-        fprintf(stderr, "Process is not on stack\n");
-        return;
-    }
-    kernel_stack_info->kernel_stack_used = kernel_stack_info->kernel_stack_used - (MEM_BLOCK_SIZE + p->size);
-    free(p);
-    */
     if(p->state != FINISHED){
         fprintf(stderr, "process not on stack\n");
         return;
@@ -174,11 +167,11 @@ void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
         return;
     }
 
-    struct Mem_Block *current = NULL;
+    struct Mem_Block *current = top;
     struct Mem_Block *prev = NULL;
 
     while(current != NULL){
-        if(memcmp(&current->process, p, sizeof(struct Process)) == 0){
+        if(current->process->pid == p->pid){
             if (prev == NULL){
                 top = current->next_b;
             }else{
@@ -264,5 +257,6 @@ int main(int argc, char *argv[])
     printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
     printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
     free(kernel_stack_info);
+
 }
 
