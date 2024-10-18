@@ -74,7 +74,6 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
         return -1;
     }
     kernel_stack_info->kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
-
     b->process = p;
 
     if(top == NULL){
