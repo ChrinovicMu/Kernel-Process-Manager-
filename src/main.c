@@ -26,13 +26,13 @@ struct Kernel_Info{
 
 //process's register usage 
 struct Context{
-    int eip;
-    int esp;
-    int ebc;
-    int edx;
-    int esi;
-    int edi;
-    int ebp;
+    uint32_t eip;
+    int32_t esp;
+    int32_t ebc;
+    int32_t edx;
+    int32_t esi;
+    int32_t edi;
+    int32_t ebp;
 };
 
 //state of process

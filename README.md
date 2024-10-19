@@ -2,7 +2,8 @@
 -under development 
 
 ## Description
-This project simulates how a kernel manages processes 
+This project simulates how a kernel manages processes
+Each individual thread represents a single task/process(for now) :)
 
 ## Requirements 
 -C version c99
@@ -33,4 +34,6 @@ Below is a breakdown of thw key Functions in the main code:
 ### run_process_thread()
 -executes the process using run_P as a single thread
 
+### kill_P()
+-looks for a process id in the process data structure, free up the memory of both the process and it's assigned memory block
 
