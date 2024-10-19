@@ -2,8 +2,9 @@ TODO:
 
 -implemnt effective kill function                                                           1 
 -run the threads in parllel                                                                 1
--find a way to free up Mem_Block allocated memory for each individual process               0
+-find a way to free up Mem_Block allocated memory for each individual process               1
+-utilize atomic fuctions                                                                    0
 -implment scheduler                                                                         0
-_implement context switch                                                                   0
+-implement context switch                                                                   0
 
 
