@@ -55,7 +55,7 @@ struct Process{
 };
 int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
-    pthread_mutex_unlock(&process_mutex);
+    pthread_mutex_lock(&process_mutex);
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
 
     if (!b){
@@ -64,11 +64,13 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
         return -1; 
     }
     if (p->state !=READY){
+        free(b);
         fprintf(stderr, "process not ready for execution\n");
         pthread_mutex_unlock(&process_mutex);
         return -1;
     }
     if((kernel_stack_info->kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_info->kernel_stack_mem)){
+        free(b);
         pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
         return -1;
@@ -78,8 +80,11 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
     if(top == NULL){
         top = b;
+        b->next_b = NULL;
+        b->previous_b = NULL;
     }else {
         b->next_b = top;
+        b->previous_b = NULL;
         top->previous_b = b;
         top = b;
     }
@@ -88,9 +93,10 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 }
 void run_P(struct Process *p){
 
-    pthread_mutex_unlock(&process_mutex);
+    pthread_mutex_lock(&process_mutex);
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
+        pthread_mutex_unlock(&process_mutex);
         return;
     }
     p->state = RUNNING;
@@ -103,11 +109,11 @@ void run_P(struct Process *p){
         printf("process : %d -> RUNNING\n", p->pid);
         sleep(1);
     }
-    pthread_mutex_unlock(&process_mutex);
+    pthread_mutex_lock(&process_mutex);
     p->state = FINISHED;
+    pthread_mutex_unlock(&process_mutex);
 
     printf("process : %d -> FINISHED\n\n", p->pid);
-    pthread_mutex_unlock(&process_mutex);
 }
 
 void *thread_func(void *arg){
@@ -138,7 +144,10 @@ void run_process_threads(struct Process *p_array[], size_t len){
 }
 
 struct Process * creatProcess(unsigned int id){
-
+    if(id == 0){
+        fprintf(stderr, "invalid process id\n");
+        return NULL;
+    }
     struct Context context = {12, 13, 3,0,0,0,0};    //arbitury test values
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
 
@@ -156,13 +165,18 @@ struct Process * creatProcess(unsigned int id){
     return (p);
 }
 void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
+    
+    pthread_mutex_lock(&process_mutex);
+
+    if(p == NULL || kernel_stack_info == NULL){
+        fprintf(stderr, "invalid pointer passed to kill\n");
+        pthread_mutex_unlock(&process_mutex);
+        return;
+    }
 
     if(p->state != FINISHED){
         fprintf(stderr, "process not on stack\n");
-        return;
-    }
-    if(p == NULL || kernel_stack_info == NULL){
-        fprintf(stderr, "invalid pointer passed to kill\n");
+        pthread_mutex_unlock(&process_mutex);
         return;
     }
 
@@ -179,12 +193,14 @@ void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
             kernel_stack_info->kernel_stack_used -= (MEM_BLOCK_SIZE + p->size);
             free(current->process);
             free(current);
+            pthread_mutex_unlock(&process_mutex);
             return;
         }
         prev = current;
         current = current->next_b;
     }
     fprintf(stderr, "Process not found in memory blocks\n");
+    pthread_mutex_unlock(&process_mutex);
 }
 void clean_memoryBlocks(){
 
