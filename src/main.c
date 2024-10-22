@@ -238,7 +238,8 @@ int main(int argc, char *argv[])
         free(p2);
         free(p3);
         free(p4);
-        return -1;
+        free(kernel_stack_info);
+        exit(1);
     }
 
     int push1, push2, push3, push4;
@@ -249,7 +250,7 @@ int main(int argc, char *argv[])
     push4 = push_P(p4, kernel_stack_info);
 
     if(push1 != 0 || push2 != 0 || push3 != 0 || push4 != 0){
-        fprintf(stderr, "Couldn't push to the memory\n");
+        fprintf(stderr, "Couldn't push to the stack\n");
         return -1;
     }
     struct Process *p_array[4] = {p1, p2, p3, p4};
