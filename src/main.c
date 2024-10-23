@@ -27,12 +27,14 @@ struct Kernel_Info{
 //process's register usage 
 struct Context{
     uint32_t eip;
-    int32_t esp;
-    int32_t ebc;
-    int32_t edx;
-    int32_t esi;
-    int32_t edi;
-    int32_t ebp;
+    uint32_t esp;
+    uint32_t eax;
+    uint32_t ebx;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t ebp;
 };
 
 //state of process
@@ -148,7 +150,7 @@ struct Process * creatProcess(unsigned int id){
         fprintf(stderr, "invalid process id\n");
         return NULL;
     }
-    struct Context context = {12, 13, 3,0,0,0,0};    //arbitury test values
+    struct Context context = {12, 13, 3,0,0,0,0,0,0};    //arbitury test values
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
 
     if(!p){
