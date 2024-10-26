@@ -57,6 +57,11 @@ struct Process{
 };
 int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
+    if (p == NULL || kernel_stack_info == NULL){
+        fprintf(stderr, "invalid pointers\n");
+        return -1;
+    }
+
     pthread_mutex_lock(&process_mutex);
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
 
@@ -94,6 +99,10 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
     return 0;
 }
 void run_P(struct Process *p){
+    if(p == NULL){
+        fprintf(stderr, "invlid process pointer\n");
+        return;
+    }
 
     pthread_mutex_lock(&process_mutex);
     if (p->state != READY){
