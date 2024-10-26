@@ -67,18 +67,15 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
     if (!b){
         fprintf(stderr,"allocation failed\n");
-        pthread_mutex_unlock(&process_mutex);
         return -1; 
     }
     if (p->state !=READY){
         free(b);
         fprintf(stderr, "process not ready for execution\n");
-        pthread_mutex_unlock(&process_mutex);
         return -1;
     }
     if((kernel_stack_info->kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_info->kernel_stack_mem)){
         free(b);
-        pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
         return -1;
     }
@@ -107,7 +104,6 @@ void run_P(struct Process *p){
     pthread_mutex_lock(&process_mutex);
     if (p->state != READY){
         fprintf(stderr, "Not ready for execution\n");
-        pthread_mutex_unlock(&process_mutex);
         return;
     }
     p->state = RUNNING;
@@ -222,6 +218,11 @@ void clean_memoryBlocks(){
         free(current);
         current = next;
     }
+}
+
+//TODO:
+void RRschedule(){
+    //implementation of round robin scheduling alogorithms 
 }
 int main(int argc, char *argv[])
 {
