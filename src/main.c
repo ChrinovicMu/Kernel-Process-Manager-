@@ -96,6 +96,7 @@ int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
     return 0;
 }
 void run_P(struct Process *p){
+
     if(p == NULL){
         fprintf(stderr, "invlid process pointer\n");
         return;
@@ -116,6 +117,7 @@ void run_P(struct Process *p){
         printf("process : %d -> RUNNING\n", p->pid);
         sleep(1);
     }
+
     pthread_mutex_lock(&process_mutex);
     p->state = FINISHED;
     pthread_mutex_unlock(&process_mutex);
@@ -151,6 +153,7 @@ void run_process_threads(struct Process *p_array[], size_t len){
 }
 
 struct Process * creatProcess(unsigned int id){
+
     if(id == 0){
         fprintf(stderr, "invalid process id\n");
         return NULL;
@@ -183,7 +186,6 @@ void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
 
     if(p->state != FINISHED){
         fprintf(stderr, "process not on stack\n");
-        pthread_mutex_unlock(&process_mutex);
         return;
     }
 
@@ -265,6 +267,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Couldn't push to the stack\n");
         return -1;
     }
+
     struct Process *p_array[4] = {p1, p2, p3, p4};
     size_t len = sizeof(p_array)/ sizeof(p_array[0]);
 
