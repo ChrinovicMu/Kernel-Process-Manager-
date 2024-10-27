@@ -1,4 +1,4 @@
-# Process Management System Documentation
+# Kernel Process Manager Documentation
 
 ## Overview
 This system implements a basic process management and scheduling system in C, featuring memory management, process states, thread-based execution, and synchronization mechanisms. The system manages processes in a stack-like memory structure with thread-safe operations.
