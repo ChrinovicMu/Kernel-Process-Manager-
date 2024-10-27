@@ -17,23 +17,5 @@ commands:
 -'make build'- to compile  
 -'make run'- to run
 
-## Function Descriptions
-Below is a breakdown of thw key Functions in the main code:
-
-
-### creatProcess()
--creates a single process, taking in process id and size as arguments.  
--Note : using 'size' and 'process id' arguments are just for testing , will fix later
-
-### push_P()
--pushes a process onto the kernel stack if conditions have been met
-
-### run_P()
--executes a process if conditions have been met 
-
-### run_process_thread()
--executes the process using run_P as a single thread
-
-### kill_P()
--looks for a process id in the process data structure, free up the memory of both the process and it's assigned memory block
-
+## Codebase description is in the documentation
+[Go to docs](docs.md)
