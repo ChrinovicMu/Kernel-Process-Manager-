@@ -131,9 +131,10 @@ free(kernel_stack_info);
 ```
 
 ## Future Improvements
-- TODO: Implementation of Round Robin scheduling algorithm (RRschedule function)
 - Potential improvements to memory management
 - Enhanced error handling and recovery mechanisms
+- TODO: Implementation of Round Robin scheduling algorithm (RRschedule function)
+- Processes Context Switching mechanisms
 
 ## Limitations
 - Fixed memory limit of 1024 bytes
