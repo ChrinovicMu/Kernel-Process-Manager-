@@ -46,14 +46,15 @@ enum P_State{
     FINISHED,
 };
 
-//process structure 
+//process structure
+
 struct Process{
-    unsigned int size;      //size of process
-    enum P_State state;     //state
-    int pid;                //process id 
-    int slp : 1;            //ignore 
-    int kill: 1;            //ignore 
-    struct Context context; // register usage
+    size_t size;
+    enum P_State state;
+    unsigned int pid;
+    int slp : 1;
+    int kill: 1;
+    struct Context context; 
 };
 int push_P(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
@@ -174,18 +175,12 @@ struct Process * creatProcess(unsigned int id){
 
     return (p);
 }
-void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
-    
+void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){ 
     pthread_mutex_lock(&process_mutex);
 
     if(p == NULL || kernel_stack_info == NULL){
-        fprintf(stderr, "invalid pointer passed to kill\n");
+        fprintf(stderr, "invalid process ptr\n");
         pthread_mutex_unlock(&process_mutex);
-        return;
-    }
-
-    if(p->state != FINISHED){
-        fprintf(stderr, "process not on stack\n");
         return;
     }
 
@@ -208,7 +203,7 @@ void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
         prev = current;
         current = current->next_b;
     }
-    fprintf(stderr, "Process not found in memory blocks\n");
+    fprintf(stderr, "Process not in mem block\n");
     pthread_mutex_unlock(&process_mutex);
 }
 void clean_memoryBlocks(){
@@ -221,7 +216,6 @@ void clean_memoryBlocks(){
         current = next;
     }
 }
-
 //TODO:
 void RRschedule(){
     //implementation of round robin scheduling alogorithms 
