@@ -163,7 +163,7 @@ struct Process * creatProcess(unsigned int id){
     struct Process *p = (struct Process *)malloc(sizeof(struct Process));
 
     if(!p){
-        fprintf(stderr, "memory allocation of process failed\n");
+        fprintf(stderr, "Process memory allocation failed\n");
         return NULL;
     }
     p->size = sizeof(struct Process);
@@ -215,6 +215,7 @@ void clean_memoryBlocks(){
         free(current);
         current = next;
     }
+    printf("All memory blocks cleared\n");
 }
 //TODO:
 void RRschedule(){
@@ -225,7 +226,7 @@ int main(int argc, char *argv[])
     struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
     if (kernel_stack_info == NULL){
         fprintf(stderr,"Error allocating kernel info memory");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     kernel_stack_info->kernel_stack_mem = MEMORY_LIMIT;
     kernel_stack_info->kernel_stack_used = 0;
@@ -247,7 +248,7 @@ int main(int argc, char *argv[])
         free(p3);
         free(p4);
         free(kernel_stack_info);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     int push1, push2, push3, push4;
@@ -259,7 +260,12 @@ int main(int argc, char *argv[])
 
     if(push1 != 0 || push2 != 0 || push3 != 0 || push4 != 0){
         fprintf(stderr, "Couldn't push to the stack\n");
-        return -1;
+        free(p1);
+        free(p2);
+        free(p3);
+        free(p4);
+        free(kernel_stack_info);
+        exit(EXIT_FAILURE);
     }
 
     struct Process *p_array[4] = {p1, p2, p3, p4};
