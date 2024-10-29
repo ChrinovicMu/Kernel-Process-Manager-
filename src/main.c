@@ -177,13 +177,11 @@ struct Process * creatProcess(unsigned int id){
 }
 void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){ 
     pthread_mutex_lock(&process_mutex);
-
     if(p == NULL || kernel_stack_info == NULL){
         fprintf(stderr, "invalid process ptr\n");
         pthread_mutex_unlock(&process_mutex);
         return;
     }
-
     struct Mem_Block *current = top;
     struct Mem_Block *prev = NULL;
 
@@ -206,12 +204,20 @@ void kill_P(struct Process *p, struct Kernel_Info *kernel_stack_info){
     fprintf(stderr, "Process not in mem block\n");
     pthread_mutex_unlock(&process_mutex);
 }
-void clean_memoryBlocks(){
-
+void clean_memoryBlocks(struct Kernel_Info *kernel_stack_info){
+    if(top == NULL){
+        printf("No memory blocks to clear\n");
+        return;
+    }
     struct Mem_Block *current = NULL;
     current = top;
     while (current != NULL){
         struct Mem_Block *next = current->next_b;
+        if(current->process != NULL){
+            kernel_stack_info->kernel_stack_used -= (current->process->size);
+            free(current->process);
+        }
+        kernel_stack_info->kernel_stack_used -= MEM_BLOCK_SIZE;
         free(current);
         current = next;
     }
@@ -225,7 +231,7 @@ int main(int argc, char *argv[])
 {
     struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
     if (kernel_stack_info == NULL){
-        fprintf(stderr,"Error allocating kernel info memory");
+        fprintf(stderr,"Error kernel info memory allocation\n");
         exit(EXIT_FAILURE);
     }
     kernel_stack_info->kernel_stack_mem = MEMORY_LIMIT;
@@ -282,12 +288,18 @@ int main(int argc, char *argv[])
     kill_P(p2, kernel_stack_info);
     kill_P(p3, kernel_stack_info);
     kill_P(p4, kernel_stack_info);
-    clean_memoryBlocks();
 
     printf("AFTER KILL : \n");
     printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
     printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
+
+    clean_memoryBlocks(kernel_stack_info);
+    printf("Clearing all memory blocks: \n");
+    printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
     free(kernel_stack_info);
+
+    
 
 }
 
