@@ -54,7 +54,7 @@ struct Process{
     struct Context context; 
 };
 void add_to_stack(struct Mem_Block *b){
-    pthread_mutex_lock(&process_mutex);
+
     if(top == NULL){
         top = b;
         b->next_b = NULL;
@@ -65,7 +65,6 @@ void add_to_stack(struct Mem_Block *b){
         top->previous_b = b;
         top = b;
     }
-    pthread_mutex_unlock(&process_mutex);
 }
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
@@ -97,8 +96,17 @@ int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
     kernel_stack_info->kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
 
-    add_to_stack(b);
-
+//add_to_stack(b); 
+    if(top == NULL){
+        top = b;
+        b->next_b = NULL;
+        b->previous_b = NULL;
+    }else {
+        b->next_b = top;
+        b->previous_b = NULL;
+        top->previous_b = b;
+        top = b;
+    }
     pthread_mutex_unlock(&process_mutex);
     return 0;
 }
@@ -116,6 +124,7 @@ void run_p(struct Process *p){
         return;
     }
     p->state = RUNNING;
+    pthread_mutex_unlock(&process_mutex);
 
     int execution_time = 10;
     size_t x;
@@ -124,6 +133,8 @@ void run_p(struct Process *p){
         printf("process : %d -> RUNNING\n", p->pid);
         sleep(1);
     }
+
+    pthread_mutex_lock(&process_mutex);
     p->state = FINISHED;
     pthread_mutex_unlock(&process_mutex);
 
@@ -163,13 +174,16 @@ struct Process * create_process(unsigned int id){
         fprintf(stderr, "invalid process id\n");
         return NULL;
     }
-    struct Context context = {12, 13, 3,0,0,0,0,0,0};    //arbitury test values
-    struct Process *p = (struct Process *)malloc(sizeof(struct Process));
+    struct Context context = {0};    //arbitury test values
+    context.eip = 12;
+    context.esp = 13;
 
+    struct Process *p = (struct Process *)malloc(sizeof(struct Process));
     if(!p){
         fprintf(stderr, "Process memory allocation failed\n");
         return NULL;
     }
+
     p->size = sizeof(struct Process);
     p->state = READY;
     p->pid = id;
@@ -215,9 +229,11 @@ void clean_memory_blocks(){
     current = top;
     while (current != NULL){
         struct Mem_Block *next = current->next_b;
+        free(current->process);
         free(current);
         current = next;
     }
+    top = NULL;
     printf("All memory blocks cleared\n");
 }
 //TODO:
@@ -227,6 +243,7 @@ void rr_schedule(){
 int main(int argc, char *argv[])
 {
     struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
+
     if (kernel_stack_info == NULL){
         fprintf(stderr,"Error allocating kernel info memory");
         exit(EXIT_FAILURE);
