@@ -1,12 +1,8 @@
+#include "prolib.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <stdint.h>
-#include <pthread.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
 
+<<<<<<< HEAD
 #define MEMORY_LIMIT 1024
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
 pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -233,15 +229,27 @@ int main(int argc, char *argv[])
     if (kernel_stack_info == NULL){
         fprintf(stderr,"Error allocating kernel info memory");
         exit(EXIT_FAILURE);
+=======
+int main(void) {
+    // Initialize kernel info
+    struct Kernel_Info* kernel_stack_info = malloc(sizeof(struct Kernel_Info));
+    if (!kernel_stack_info) {
+        fprintf(stderr, "Error kernel info memory allocation\n");
+        return EXIT_FAILURE;
+>>>>>>> origin/main
     }
     kernel_stack_info->kernel_stack_mem = MEMORY_LIMIT;
     kernel_stack_info->kernel_stack_used = 0;
 
-    struct Process *p1 = NULL;
-    struct Process *p2 = NULL;
-    struct Process *p3 = NULL;
-    struct Process *p4 = NULL;
+    // Create processes
+    struct Process* processes[4] = {
+        creatProcess(2222),
+        creatProcess(3333),
+        creatProcess(4444),
+        creatProcess(9999)
+    };
 
+<<<<<<< HEAD
     p3 = create_process(2222);
     p4 = create_process(4444);
     p1 = create_process(3333);
@@ -272,28 +280,31 @@ int main(int argc, char *argv[])
         free(p4);
         free(kernel_stack_info);
         exit(EXIT_FAILURE);
-    }
+=======
 
-    struct Process *p_array[4] = {p1, p2, p3, p4};
-    size_t len = sizeof(p_array)/ sizeof(p_array[0]);
+    // Memory analysis
+    printf("BEFORE KILL:\n");
+    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
 
-    run_process_threads(p_array, len);
-
-    //JUST FOR ANALYSIS AND TESTING OF Kill_p()
-    printf("BEFORE KILL :\n");
-    printf("kernel stack memory : %d\n", kernel_stack_info->kernel_stack_mem);
-    printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
-
+<<<<<<< HEAD
     kill_p(p1, kernel_stack_info);
     kill_p(p2, kernel_stack_info);
     kill_p(p3, kernel_stack_info);
     kill_p(p4, kernel_stack_info);
     clean_memory_blocks();
+=======
+    printf("AFTER KILL:\n");
+    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
 
-    printf("AFTER KILL : \n");
-    printf("kernel stack memory : %d\n",kernel_stack_info->kernel_stack_mem);
-    printf("kernel memory used : %d\n\n", kernel_stack_info->kernel_stack_used);
+    // Final cleanup
+    clean_memoryBlocks(kernel_stack_info);
+    printf("AFTER CLEANUP:\n");
+    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
+    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
+>>>>>>> origin/main
+
     free(kernel_stack_info);
-
+    return EXIT_SUCCESS;
 }
-
