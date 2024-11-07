@@ -4,6 +4,7 @@ pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct Mem_Block *top = NULL;
 
 void add_to_stack(struct Mem_Block *b){
+
     if(top == NULL){
         top = b;
         b->next_b = NULL;
@@ -15,8 +16,8 @@ void add_to_stack(struct Mem_Block *b){
         top = b;
     }
 }
-
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
+
     if (p == NULL || kernel_stack_info == NULL){
         fprintf(stderr, "invalid pointers\n");
         return -1;
@@ -42,14 +43,13 @@ int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
         fprintf(stderr, "Memory Full\n");
         return -1;
     }
+
     kernel_stack_info->kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
-
     add_to_stack(b);
     pthread_mutex_unlock(&process_mutex);
     return 0;
 }
-
 void run_p(struct Process *p){
 
     if(p == NULL){
@@ -78,7 +78,6 @@ void run_p(struct Process *p){
 
     printf("process : %d -> FINISHED\n\n", p->pid);
 }
-
 void *thread_func(void *arg){
 
     struct Process *p = (struct Process*)arg;
@@ -86,8 +85,8 @@ void *thread_func(void *arg){
     run_p(p);
     return NULL;
 }
-
 void run_process_threads(struct Process *p_array[], size_t len){
+
     pthread_t thread_arr[len];
     int x, t_err; 
 
@@ -106,12 +105,13 @@ void run_process_threads(struct Process *p_array[], size_t len){
         }
     }
 }
-
 struct Process * create_process(unsigned int id){
+
     if(id == 0){
         fprintf(stderr, "invalid process id\n");
         return NULL;
     }
+
     struct Context context = {0};    //arbitury test values
     context.eip = 12;
     context.esp = 13;
@@ -123,6 +123,7 @@ struct Process * create_process(unsigned int id){
         fprintf(stderr, "Process memory allocation failed\n");
         return NULL;
     }
+    
     p->size = sizeof(struct Process);
     p->state = READY;
     p->pid = id;
@@ -133,6 +134,7 @@ struct Process * create_process(unsigned int id){
 }
 
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){ 
+
     if(p == NULL || kernel_stack_info == NULL){
         fprintf(stderr, "invalid process ptr\n");
         return;
@@ -144,15 +146,18 @@ void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){
     pthread_mutex_lock(&process_mutex);
 
     while(current != NULL){
+
         if(current->process != NULL && current->process->pid == p->pid){
             if (prev == NULL){
                 top = current->next_b;
             }else{
                 prev->next_b = current->next_b;
             }
+
             kernel_stack_info->kernel_stack_used -= (MEM_BLOCK_SIZE + p->size);
             free(current->process);
             free(current);
+
             pthread_mutex_unlock(&process_mutex);
             return;
         }
@@ -162,12 +167,14 @@ void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){
     fprintf(stderr, "Process not in mem block\n");
     pthread_mutex_unlock(&process_mutex);
 }
+void clean_memory_blocks(void){
 
-void clean_memory_blocks(){
     struct Mem_Block *current = NULL;
     current = top;
+
     while (current != NULL){
         struct Mem_Block *next = current->next_b;
+
         free(current->process);
         free(current);
         current = next;
@@ -175,7 +182,6 @@ void clean_memory_blocks(){
     top = NULL;
     printf("All memory blocks cleared\n");
 }
-
 void rr_schedule(){
     //implementation of round robin scheduling alogorithms 
 }
