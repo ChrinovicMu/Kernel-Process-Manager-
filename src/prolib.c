@@ -167,15 +167,28 @@ void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){
     fprintf(stderr, "Process not in mem block\n");
     pthread_mutex_unlock(&process_mutex);
 }
-void clean_memory_blocks(void){
+void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
 
+    if (kernel_stack_info == NULL){
+        fprintf(stderr, "invalid kernel_stack_info\n");
+        return;
+    }
+ 
+    if(top == NULL){
+        printf("no blocks memory blocks to clear\n");
+        return;
+    }
     struct Mem_Block *current = NULL;
     current = top;
 
     while (current != NULL){
         struct Mem_Block *next = current->next_b;
 
-        free(current->process);
+        if(current->process != NULL){
+            kernel_stack_info->kernel_stack_used -= current->process->size;
+            free(current->process);
+        }
+        kernel_stack_info->kernel_stack_used -= MEM_BLOCK_SIZE;
         free(current);
         current = next;
     }
