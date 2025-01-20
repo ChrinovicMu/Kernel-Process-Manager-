@@ -9,18 +9,29 @@
 
 #define MEMORY_LIMIT 1024
 #define MEM_BLOCK_SIZE sizeof(struct Mem_Block)
+#define MAX_PROCESSES 4
+#define MAX_QUEUES 100
 
+struct Queue {
+    struct Process *process_arr[MAX_PROCESSES];
+    int count;
+    int quantum;
+};
+struct MLFQ {
+    struct Queue queues[MAX_QUEUES];
+    int current_queue;
+};
 struct Mem_Block {
     struct Process* process;
     struct Mem_Block *next_b;
     struct Mem_Block *previous_b;
 };
-
 struct Kernel_Info {
     size_t kernel_stack_mem;
     size_t kernel_stack_used;
 };
 
+//process registers content 
 struct Context {
     uint32_t eip;
     uint32_t esp;
@@ -32,7 +43,6 @@ struct Context {
     uint32_t edi;
     uint32_t ebp;
 };
-
 enum P_State {
     READY,
     RUNNING,
@@ -45,19 +55,21 @@ struct Process {
     size_t size;
     enum P_State state;
     unsigned int pid;
-    int slp : 1;
-    int kill: 1;
-    struct Context context; 
+    struct Context context;
+    int burst_time;
+    int remaining_time;
+    int queue_level;
+    int quantum_used;
 };
 
+struct MLFQ *init_mlfq(void);
+void add_process(struct MLFQ *mlfq, int pid, int burst_time);
+void execute_time_slice(struct MLFQ *mlfq);
 void add_to_stack(struct Mem_Block *b);
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info);
 void run_p(struct Process *p);
-void *thread_func(void *arg);
-void run_process_threads(struct Process *p_array[], size_t len);
 struct Process * create_process(unsigned int id);
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info);
 void clean_memory_blocks();
-void rr_schedule();
 
 #endif

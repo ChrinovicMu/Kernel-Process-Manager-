@@ -1,10 +1,8 @@
 #include "prolib.h"
 
-pthread_mutex_t process_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct Mem_Block *top = NULL;
 
 void add_to_stack(struct Mem_Block *b){
-
     if(top == NULL){
         top = b;
         b->next_b = NULL;
@@ -22,97 +20,36 @@ int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
         fprintf(stderr, "invalid pointers\n");
         return -1;
     }
-
     struct Mem_Block *b = (struct Mem_Block *) malloc(sizeof(struct Mem_Block));
     if (!b){
         fprintf(stderr,"allocation failed\n");
         return -1; 
     }
 
-    pthread_mutex_lock(&process_mutex);
     if (p->state !=READY){
         free(b);
-        pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "process not ready for execution\n");
         return -1;
     }
-
     if((kernel_stack_info->kernel_stack_used + MEM_BLOCK_SIZE + p->size) > (kernel_stack_info->kernel_stack_mem)){
         free(b);
-        pthread_mutex_unlock(&process_mutex);
         fprintf(stderr, "Memory Full\n");
         return -1;
     }
-
     kernel_stack_info->kernel_stack_used += (p->size + MEM_BLOCK_SIZE);
     b->process = p;
     add_to_stack(b);
-    pthread_mutex_unlock(&process_mutex);
     return 0;
 }
-void run_p(struct Process *p){
-
-    if(p == NULL){
-        fprintf(stderr, "invlid process pointer\n");
-        return;
-    }
-    pthread_mutex_lock(&process_mutex);
-    if (p->state != READY){
-        pthread_mutex_unlock(&process_mutex);
-        fprintf(stderr, "Not ready for execution\n");
-        return;
-    }
-    p->state = RUNNING;
-    pthread_mutex_unlock(&process_mutex);
-
-    int execution_time = 10;
-    size_t x;
-
-    for (x = 0; x < execution_time; ++x){
-        printf("process : %d -> RUNNING\n", p->pid);
-        sleep(1);
-    }
-    pthread_mutex_lock(&process_mutex);
-    p->state = FINISHED;
-    pthread_mutex_unlock(&process_mutex);
-
-    printf("process : %d -> FINISHED\n\n", p->pid);
-}
-void *thread_func(void *arg){
-
-    struct Process *p = (struct Process*)arg;
-    pthread_t thread;
-    run_p(p);
-    return NULL;
-}
-void run_process_threads(struct Process *p_array[], size_t len){
-
-    pthread_t thread_arr[len];
-    int x, t_err; 
-
-    for(x = 0; x < len; ++x){
-       t_err = pthread_create(&thread_arr[x], NULL, thread_func, p_array[x]);
-        if(t_err != 0){
-            fprintf(stderr, "Error creating threads\n");
-            return; 
-        }
-    }
-    for(x = 0; x < len; ++x){
-        t_err = pthread_join(thread_arr[x], NULL);
-        if(t_err != 0){
-            fprintf(stderr, "Error joinning threads\n");
-            return;
-        }
-    }
-}
-struct Process * create_process(unsigned int id){
+struct Process * create_process(unsigned int id, uint32 burst_time){
 
     if(id == 0){
         fprintf(stderr, "invalid process id\n");
         return NULL;
     }
 
-    struct Context context = {0};    //arbitury test values
+    //arbitrary test values
+    struct Context context = {0};
     context.eip = 12;
     context.esp = 13;
     context.eax = 54;
@@ -123,27 +60,22 @@ struct Process * create_process(unsigned int id){
         fprintf(stderr, "Process memory allocation failed\n");
         return NULL;
     }
-    
-    p->size = sizeof(struct Process);
-    p->state = READY;
-    p->pid = id;
-    p->slp = 0;
-    p->kill = 0;
-    p->context = context;
+    process->size = sizeof(struct Process);
+    process->state = READY;
+    process->pid = id;
+    process->context = context;
+    process->burst_time = burst_time;
     return (p);
 }
-
+//kill single process and free its memory block 
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){ 
 
     if(p == NULL || kernel_stack_info == NULL){
         fprintf(stderr, "invalid process ptr\n");
         return;
     }
-
     struct Mem_Block *current = top;
     struct Mem_Block *prev = NULL;
-
-    pthread_mutex_lock(&process_mutex);
 
     while(current != NULL){
 
@@ -158,14 +90,12 @@ void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){
             free(current->process);
             free(current);
 
-            pthread_mutex_unlock(&process_mutex);
             return;
         }
         prev = current;
         current = current->next_b;
     }
     fprintf(stderr, "Process not in mem block\n");
-    pthread_mutex_unlock(&process_mutex);
 }
 void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
 
@@ -195,6 +125,88 @@ void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
     top = NULL;
     printf("All memory blocks cleared\n");
 }
-void rr_schedule(){
-    //implementation of round robin scheduling alogorithms 
+
+struct MLFQ *init_mlfq(void) {
+    struct MLFQ *mlfq = (struct MLFQ*)malloc(sizeof(struct MLFQ));
+    if(!mlfq){
+        fprintf(stderr, "Failed to allocate MLFQ\n");
+    }
+    for(size_t x = 0; x < MAX_QUEUES; ++x) {
+        mlfq->queues[x].count = 0;
+        mlfq->queues[x].quantum = 1 << x;
+    }
+    mlfq->current_queue = 0;
+    return mlfq;
+}
+void add_process(struct MLFQ *mlfq, int pid, int burst_time) {
+
+    process->burst_time = burst_time;
+    process->remaining_time = burst_time;
+    process->queue_level = 0;
+    process->quantum_used = 0;
+    process->state = READY;  // Make sure state is set
+
+    struct Queue *top_queue = &mlfq->queues[0];
+    if (top_queue->count >= MAX_PROCESSES) {
+        fprintf(stderr, "Queue is full\n");
+        free(process);
+        return;
+    }
+    top_queue->process_arr[top_queue->count++] = process;
+}
+static void demote_process(struct MLFQ *mlfq, struct Process *process, int current_queue_level) {
+
+    if (current_queue_level + 1 < MAX_QUEUES) {
+        process->queue_level = current_queue_level + 1;
+        process->quantum_used = 0;
+        struct Queue *next_queue = &mlfq->queues[current_queue_level + 1];
+        next_queue->process_arr[next_queue->count++] = process;
+        printf("Process %d demoted to queue %d\n", process->pid, current_queue_level + 1);
+    }
+}
+void execute_time_slice(struct MLFQ *mlfq){
+
+    if (!mlfq){
+        return;
+    }
+    for(size_t x = 0; x < MAX_QUEUES; x++) {
+        struct Queue *current_queue = &mlfq->queues[x];
+
+        if (current_queue->count > 0) {
+            struct Process *process = current_queue->process_arr[0];
+
+            if(process == NULL){
+                fprintf(stderr, "invlid process pointer\n");
+                return;
+            }
+            if (process->state != READY){
+                fprintf(stderr, "Not ready for execution\n");
+                return;
+            }
+            process->state = RUNNING;
+            process->remaining_time--;
+            process->quantum_used++;
+
+            printf("PID %d is RUNNING",
+                   process->pid);
+
+            if (process->remaining_time == 0) {
+                printf("Process %d completed\n", process->pid);
+                process->state = FINISHED;
+                for(int i = 0; i < current_queue->count - 1; ++i) {
+                    current_queue->process_arr[i] = current_queue->process_arr[i + 1];
+                }
+                current_queue->count--;
+                free(process);
+            }
+            else if (process->quantum_used >= current_queue->quantum) {
+                for(int i = 0; i < current_queue->count - 1; ++i) {
+                    current_queue->process_arr[i] = current_queue->process_arr[i + 1];
+                }
+                current_queue->count--;
+                demote_process(mlfq, process, x);
+            }
+            return;
+        }
+    }
 }
