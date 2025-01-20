@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "prolib.h"
 
 int main(int argc, char *argv[]) {
@@ -21,10 +22,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Create processes
-    struct Process *p1 = create_process(1111);
-    struct Process *p2 = create_process(2222);
-    struct Process *p3 = create_process(3333);
-    struct Process *p4 = create_process(4444);
+    struct Process *p1 = create_process(1111, 10);
+    struct Process *p2 = create_process(2222, 8);
+    struct Process *p3 = create_process(3333, 4);
+    struct Process *p4 = create_process(4444, 7);
 
     if (!p1 || !p2 || !p3 || !p4) {
         fprintf(stderr, "memory allocation of process failed\n");
@@ -37,13 +38,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Set burst times for processes
-    p1->burst_time = 10;  // Example burst times
-    p2->burst_time = 8;
-    p3->burst_time = 6;
-    p4->burst_time = 4;
-
-    // Push processes to kernel stack
     int push1 = push_p(p1, kernel_stack_info);
     int push2 = push_p(p2, kernel_stack_info);
     int push3 = push_p(p3, kernel_stack_info);
@@ -61,10 +55,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Add processes to MLFQ scheduler
-    add_process(scheduler, p1->pid, p1->burst_time);
-    add_process(scheduler, p2->pid, p2->burst_time);
-    add_process(scheduler, p3->pid, p3->burst_time);
-    add_process(scheduler, p4->pid, p4->burst_time);
+    add_process(scheduler, p1);
+    add_process(scheduler, p2);
+    add_process(scheduler, p3);
+    add_process(scheduler, p4);
 
     // Run scheduler until all processes complete
     printf("\nStarting MLFQ Scheduler:\n");

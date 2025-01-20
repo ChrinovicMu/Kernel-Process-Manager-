@@ -1,4 +1,5 @@
 #include "prolib.h"
+#include <stdbool.h>
 
 struct Mem_Block *top = NULL;
 
@@ -41,7 +42,7 @@ int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
     add_to_stack(b);
     return 0;
 }
-struct Process * create_process(unsigned int id, uint32 burst_time){
+struct Process * create_process(unsigned int id, uint32_t burst_time){
 
     if(id == 0){
         fprintf(stderr, "invalid process id\n");
@@ -55,8 +56,8 @@ struct Process * create_process(unsigned int id, uint32 burst_time){
     context.eax = 54;
     context.ebx = 5;
 
-    struct Process *p = (struct Process *)malloc(sizeof(struct Process));
-    if(!p){
+    struct Process *process = (struct Process *)malloc(sizeof(struct Process));
+    if(!process){
         fprintf(stderr, "Process memory allocation failed\n");
         return NULL;
     }
@@ -65,7 +66,7 @@ struct Process * create_process(unsigned int id, uint32 burst_time){
     process->pid = id;
     process->context = context;
     process->burst_time = burst_time;
-    return (p);
+    return (process);
 }
 //kill single process and free its memory block 
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){ 
@@ -102,8 +103,7 @@ void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
     if (kernel_stack_info == NULL){
         fprintf(stderr, "invalid kernel_stack_info\n");
         return;
-    }
- 
+    } 
     if(top == NULL){
         printf("no blocks memory blocks to clear\n");
         return;
@@ -125,7 +125,6 @@ void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
     top = NULL;
     printf("All memory blocks cleared\n");
 }
-
 struct MLFQ *init_mlfq(void) {
     struct MLFQ *mlfq = (struct MLFQ*)malloc(sizeof(struct MLFQ));
     if(!mlfq){
@@ -138,13 +137,12 @@ struct MLFQ *init_mlfq(void) {
     mlfq->current_queue = 0;
     return mlfq;
 }
-void add_process(struct MLFQ *mlfq, int pid, int burst_time) {
+void add_process(struct MLFQ *mlfq, struct Process* process) {
 
-    process->burst_time = burst_time;
-    process->remaining_time = burst_time;
+    process->remaining_time = process->burst_time;
     process->queue_level = 0;
     process->quantum_used = 0;
-    process->state = READY;  // Make sure state is set
+    process->state = READY;
 
     struct Queue *top_queue = &mlfq->queues[0];
     if (top_queue->count >= MAX_PROCESSES) {

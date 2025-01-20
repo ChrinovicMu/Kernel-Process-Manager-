@@ -56,19 +56,19 @@ struct Process {
     enum P_State state;
     unsigned int pid;
     struct Context context;
-    int burst_time;
-    int remaining_time;
-    int queue_level;
-    int quantum_used;
+    uint32_t burst_time;
+    uint32_t remaining_time;
+    uint32_t queue_level;
+    uint32_t quantum_used;
 };
 
 struct MLFQ *init_mlfq(void);
-void add_process(struct MLFQ *mlfq, int pid, int burst_time);
+void add_process(struct MLFQ *mlfq, struct Process *process);
 void execute_time_slice(struct MLFQ *mlfq);
 void add_to_stack(struct Mem_Block *b);
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info);
 void run_p(struct Process *p);
-struct Process * create_process(unsigned int id);
+struct Process * create_process(unsigned int id, uint32_t bur);
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info);
 void clean_memory_blocks();
 
