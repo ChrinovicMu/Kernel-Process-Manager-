@@ -5,16 +5,7 @@
 struct Mem_Block *top = NULL;
 
 void add_to_stack(struct Mem_Block *b){
-    if(top == NULL){
-        top = b;
-        b->next_b = NULL;
-        b->previous_b = NULL;
-    }else {
-        b->next_b = top;
-        b->previous_b = NULL;
-        top->previous_b = b;
-        top = b;
-    }
+    asm_add_to_stack(b, &top);
 }
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info){
 
@@ -193,7 +184,7 @@ void execute_time_slice(struct MLFQ *mlfq) {
 
             printf("PID %d is RUNNING\n", process->pid);
 
-            sleep(2);
+            sleep(1);
             // Execute the process
             process->state = RUNNING;
             process->remaining_time--;

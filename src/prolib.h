@@ -62,6 +62,7 @@ struct Process {
     uint32_t quantum_used;
 };
 
+extern void asm_add_to_stack(struct Mem_Block *new_block, struct Mem_Block **top);
 struct MLFQ *init_mlfq(void);
 void add_process(struct MLFQ *mlfq, struct Process *process);
 void execute_time_slice(struct MLFQ *mlfq);
