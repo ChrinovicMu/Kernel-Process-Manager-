@@ -1,5 +1,6 @@
 #include "prolib.h"
 #include <stdbool.h>
+#include <unistd.h>
 
 struct Mem_Block *top = NULL;
 
@@ -129,6 +130,7 @@ struct MLFQ *init_mlfq(void) {
     struct MLFQ *mlfq = (struct MLFQ*)malloc(sizeof(struct MLFQ));
     if(!mlfq){
         fprintf(stderr, "Failed to allocate MLFQ\n");
+        return NULL;
     }
     for(size_t x = 0; x < MAX_QUEUES; ++x) {
         mlfq->queues[x].count = 0;
@@ -138,6 +140,9 @@ struct MLFQ *init_mlfq(void) {
     return mlfq;
 }
 void add_process(struct MLFQ *mlfq, struct Process* process) {
+    if(!mlfq || !process){
+        return;
+    }
 
     process->remaining_time = process->burst_time;
     process->queue_level = 0;
@@ -147,7 +152,6 @@ void add_process(struct MLFQ *mlfq, struct Process* process) {
     struct Queue *top_queue = &mlfq->queues[0];
     if (top_queue->count >= MAX_PROCESSES) {
         fprintf(stderr, "Queue is full\n");
-        free(process);
         return;
     }
     top_queue->process_arr[top_queue->count++] = process;
@@ -162,49 +166,74 @@ static void demote_process(struct MLFQ *mlfq, struct Process *process, int curre
         printf("Process %d demoted to queue %d\n", process->pid, current_queue_level + 1);
     }
 }
-void execute_time_slice(struct MLFQ *mlfq){
 
-    if (!mlfq){
+void execute_time_slice(struct MLFQ *mlfq) {
+    if (!mlfq) {
         return;
     }
-    for(size_t x = 0; x < MAX_QUEUES; x++) {
+
+    for (size_t x = 0; x < MAX_QUEUES; x++) {
         struct Queue *current_queue = &mlfq->queues[x];
 
         if (current_queue->count > 0) {
+
+            // Validate the process pointer
+            if (current_queue->process_arr[0] == NULL) {
+                fprintf(stderr, "Invalid process pointer\n");
+                return;
+            }
+
             struct Process *process = current_queue->process_arr[0];
 
-            if(process == NULL){
-                fprintf(stderr, "invlid process pointer\n");
-                return;
-            }
-            if (process->state != READY){
+            // Check if process is ready for execution
+            if (process->state != READY) {
                 fprintf(stderr, "Not ready for execution\n");
-                return;
+                continue;
             }
+
+            printf("PID %d is RUNNING\n", process->pid);
+
+            sleep(2);
+            // Execute the process
             process->state = RUNNING;
             process->remaining_time--;
             process->quantum_used++;
 
-            printf("PID %d is RUNNING",
-                   process->pid);
-
+            // Handle process completion
             if (process->remaining_time == 0) {
                 printf("Process %d completed\n", process->pid);
                 process->state = FINISHED;
-                for(int i = 0; i < current_queue->count - 1; ++i) {
+
+                // Remove the process from the queue
+                for (int i = 0; i < current_queue->count - 1; ++i) {
                     current_queue->process_arr[i] = current_queue->process_arr[i + 1];
                 }
                 current_queue->count--;
                 free(process);
             }
+            // Handle process quantum expiration
             else if (process->quantum_used >= current_queue->quantum) {
-                for(int i = 0; i < current_queue->count - 1; ++i) {
+                printf("Process %d used up its quantum, moving to next queue\n", process->pid);
+                process->state = READY; // Reset state before demotion
+                process->quantum_used = 0; // Reset quantum usage
+
+                // Remove process from the queue
+                for (int i = 0; i < current_queue->count - 1; ++i) {
                     current_queue->process_arr[i] = current_queue->process_arr[i + 1];
                 }
+                current_queue->process_arr[current_queue->count - 1] = NULL;
                 current_queue->count--;
+
+                // Demote process to the next queue
                 demote_process(mlfq, process, x);
             }
-            return;
+            // Process remains in the queue for further execution
+            else {
+                process->state = READY;
+            }
+
+            // Only process one process per time slice
+            break;
         }
     }
 }
