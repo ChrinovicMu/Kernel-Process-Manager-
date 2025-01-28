@@ -69,26 +69,33 @@ void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info){
     }
     struct Mem_Block *current = top;
     struct Mem_Block *prev = NULL;
+    bool found = false; 
 
     while(current != NULL){
 
         if(current->process != NULL && current->process->pid == p->pid){
+            struct Mem_Block *to_free = current; 
             if (prev == NULL){
                 top = current->next_b;
             }else{
                 prev->next_b = current->next_b;
             }
+            current = current->next_b;
 
             kernel_stack_info->kernel_stack_used -= (MEM_BLOCK_SIZE + p->size);
-            free(current->process);
-            free(current);
+            free(to_free->process);
+            free(to_free);
+            found = true; 
 
-            return;
+        }else{
+
+            prev = current;
+            current = current->next_b;
         }
-        prev = current;
-        current = current->next_b;
     }
-    fprintf(stderr, "Process not in mem block\n");
+    if(!found){
+        fprintf(stderr, "Process not in mem block\n");
+    }
 }
 void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
 
@@ -109,6 +116,7 @@ void clean_memory_blocks(struct Kernel_Info *kernel_stack_info){
         if(current->process != NULL){
             kernel_stack_info->kernel_stack_used -= current->process->size;
             free(current->process);
+            current->process = NULL;
         }
         kernel_stack_info->kernel_stack_used -= MEM_BLOCK_SIZE;
         free(current);
