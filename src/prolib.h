@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <pthread.h>
 #include <unistd.h>
 
 #define MEMORY_LIMIT 1024
@@ -65,7 +64,7 @@ struct Process {
 extern void asm_add_to_stack(struct Mem_Block *new_block, struct Mem_Block **top);
 struct MLFQ *init_mlfq(void);
 void add_process(struct MLFQ *mlfq, struct Process *process);
-void execute_time_slice(struct MLFQ *mlfq);
+void execute_time_slice(struct MLFQ *mlfq, struct Kernel_Info *kernel_stack_info);
 void add_to_stack(struct Mem_Block *b);
 int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info);
 void run_p(struct Process *p);

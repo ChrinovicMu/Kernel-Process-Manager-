@@ -158,8 +158,9 @@ static void demote_process(struct MLFQ *mlfq, struct Process *process, int curre
     }
 }
 
-void execute_time_slice(struct MLFQ *mlfq) {
-    if (!mlfq) {
+void execute_time_slice(struct MLFQ *mlfq, struct Kernel_Info *kernel_stack_info) {
+    if (!mlfq || !kernel_stack_info) {
+        fprintf(stderr, "Invalid pointers passed to execute_time_slice\n");
         return;
     }
 
@@ -167,7 +168,6 @@ void execute_time_slice(struct MLFQ *mlfq) {
         struct Queue *current_queue = &mlfq->queues[x];
 
         if (current_queue->count > 0) {
-
             // Validate the process pointer
             if (current_queue->process_arr[0] == NULL) {
                 fprintf(stderr, "Invalid process pointer\n");
@@ -178,7 +178,7 @@ void execute_time_slice(struct MLFQ *mlfq) {
 
             // Check if process is ready for execution
             if (process->state != READY) {
-                fprintf(stderr, "Not ready for execution\n");
+                fprintf(stderr, "Process %d not ready for execution\n", process->pid);
                 continue;
             }
 
@@ -200,13 +200,15 @@ void execute_time_slice(struct MLFQ *mlfq) {
                     current_queue->process_arr[i] = current_queue->process_arr[i + 1];
                 }
                 current_queue->count--;
-                free(process);
+
+                // Use kill_p to properly clean up both process and memory block
+                kill_p(process, kernel_stack_info);
             }
             // Handle process quantum expiration
             else if (process->quantum_used >= current_queue->quantum) {
                 printf("Process %d used up its quantum, moving to next queue\n", process->pid);
-                process->state = READY; // Reset state before demotion
-                process->quantum_used = 0; // Reset quantum usage
+                process->state = READY;
+                process->quantum_used = 0;
 
                 // Remove process from the queue
                 for (int i = 0; i < current_queue->count - 1; ++i) {

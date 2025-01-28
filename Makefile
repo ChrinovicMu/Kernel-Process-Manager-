@@ -18,6 +18,9 @@ run:
 clean:
 	rm -f main src/*.o
 
+test: build 
+	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all --verbose ./main
+
 .PHONY: git-push
 git-push:
 	@git add .

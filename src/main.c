@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include "prolib.h"
 
+// Declare top as extern to access the global variable defined in prolib.c
+extern struct Mem_Block *top;
+
 int main(int argc, char *argv[]) {
     // Initialize kernel stack info
     struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
@@ -38,6 +41,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Push processes to stack
     int push1 = push_p(p1, kernel_stack_info);
     int push2 = push_p(p2, kernel_stack_info);
     int push3 = push_p(p3, kernel_stack_info);
@@ -75,7 +79,7 @@ int main(int argc, char *argv[]) {
         }
         
         if (processes_remaining) {
-            execute_time_slice(scheduler);
+            execute_time_slice(scheduler, kernel_stack_info);
         }
     }
     printf("Scheduler finished\n\n");
@@ -85,16 +89,18 @@ int main(int argc, char *argv[]) {
     printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
     printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
 
+    // Explicitly kill a process for demonstration
+    printf("Killing process %d\n", p1->pid);
     kill_p(p1, kernel_stack_info);
-    kill_p(p2, kernel_stack_info);
-    kill_p(p3, kernel_stack_info);
-    kill_p(p4, kernel_stack_info);
 
     printf("AFTER KILL:\n");
     printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
     printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
 
-    clean_memory_blocks(kernel_stack_info);
+    // Clean up remaining memory blocks (if any)
+    if (top != NULL) {
+        clean_memory_blocks(kernel_stack_info);
+    }
 
     printf("AFTER CLEANUP:\n");
     printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
