@@ -6,10 +6,10 @@ Initially implemented with threads,though in order for a custom schdeluing, i re
 
 
 ## Requirements 
--C version c99
--git version 2.39.5 
--architecture - intel x86-64 ISA chip
--GNU/Linux
+- C version c99 ,  <br>
+-git version 2.39.5 <br?
+-architecture - intel x86-64 ISA chip <br>
+-GNU/Linux <br>
 
 ## Installation 
 1.Clone the repository : git clone https://github.com/ChrinovicMu/Kernel-Process-Manager-.git  
