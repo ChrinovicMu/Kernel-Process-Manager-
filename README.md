@@ -2,8 +2,9 @@
 -under development 
 
 ## Description
-This project simulates how a kernel manages processes
-Each individual thread represents a single task/process(for now) :)
+This project is a kpm that manages processes in the kernel , from process scheduling to their life times
+Initially implemented with threads,though in order for a custom schdeluing, i removed threads and implemented a multu-level feed back queue scheduler 
+
 
 ## Requirements 
 -C version c99
