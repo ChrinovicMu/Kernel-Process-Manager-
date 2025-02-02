@@ -6,8 +6,8 @@ Initially implemented with threads,though in order for a custom schdeluing, i re
 
 
 ## Requirements 
-- C version c99 ,  <br>
--git version 2.39.5 <br?
+- C version c99   <br>
+-git version 2.39.5 <br>
 -architecture - intel x86-64 ISA chip <br>
 -GNU/Linux <br>
 
