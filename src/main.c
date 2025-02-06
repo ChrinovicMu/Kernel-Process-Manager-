@@ -7,6 +7,11 @@
 extern struct Mem_Block *top;
 
 int main(int argc, char *argv[]) {
+
+    if(atexit(mem_cleanup) != 0){
+        fprintf(stderr, "failed to register handler\n");
+        return 1;
+    }
     // Initialize kernel stack info
     struct Kernel_Info *kernel_stack_info = (struct Kernel_Info*) malloc(sizeof(struct Kernel_Info));
     if (kernel_stack_info == NULL) {
@@ -84,28 +89,11 @@ int main(int argc, char *argv[]) {
     }
     printf("Scheduler finished\n\n");
 
-    // Memory analysis
-    printf("BEFORE KILL:\n");
-    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
-    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
-
-    // Explicitly kill a process for demonstration
-    printf("Killing process %d\n", p1->pid);
-    kill_p(p1, kernel_stack_info);
-
-    printf("AFTER KILL:\n");
-    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
-    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
 
     // Clean up remaining memory blocks (if any)
     if (top != NULL) {
         clean_memory_blocks(kernel_stack_info);
     }
-
-    printf("AFTER CLEANUP:\n");
-    printf("kernel stack memory : %zu\n", kernel_stack_info->kernel_stack_mem);
-    printf("kernel memory used : %zu\n\n", kernel_stack_info->kernel_stack_used);
-
     // Clean up
     free(scheduler);
     free(kernel_stack_info);

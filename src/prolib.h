@@ -70,6 +70,7 @@ int push_p(struct Process * p, struct Kernel_Info * kernel_stack_info);
 void run_p(struct Process *p);
 struct Process * create_process(unsigned int id, uint32_t bur);
 void kill_p(struct Process *p, struct Kernel_Info *kernel_stack_info);
-void clean_memory_blocks();
+void clean_memory_blocks(struct kernel_stack_info *kernel_info);
+void mem_cleanup(void);
 
 #endif

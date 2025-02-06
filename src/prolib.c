@@ -4,6 +4,11 @@
 
 struct Mem_Block *top = NULL;
 
+void mem_cleanup(void){
+    if(top){
+        free(top);
+    }
+}
 void add_to_stack(struct Mem_Block *b){
     asm_add_to_stack(b, &top);
 }
