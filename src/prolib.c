@@ -176,7 +176,7 @@ void execute_time_slice(struct MLFQ *mlfq, struct Kernel_Info *kernel_stack_info
         struct Queue *current_queue = &mlfq->queues[x];
 
         if (current_queue->count > 0) {
-            // Validate the process pointer
+
             if (current_queue->process_arr[0] == NULL) {
                 fprintf(stderr, "Invalid process pointer\n");
                 return;
@@ -184,7 +184,6 @@ void execute_time_slice(struct MLFQ *mlfq, struct Kernel_Info *kernel_stack_info
 
             struct Process *process = current_queue->process_arr[0];
 
-            // Check if process is ready for execution
             if (process->state != READY) {
                 fprintf(stderr, "Process %d not ready for execution\n", process->pid);
                 continue;
@@ -193,47 +192,38 @@ void execute_time_slice(struct MLFQ *mlfq, struct Kernel_Info *kernel_stack_info
             printf("PID %d is RUNNING\n", process->pid);
 
             sleep(1);
-            // Execute the process
+            
             process->state = RUNNING;
             process->remaining_time--;
             process->quantum_used++;
 
-            // Handle process completion
             if (process->remaining_time == 0) {
                 printf("Process %d completed\n", process->pid);
                 process->state = FINISHED;
 
-                // Remove the process from the queue
                 for (int i = 0; i < current_queue->count - 1; ++i) {
                     current_queue->process_arr[i] = current_queue->process_arr[i + 1];
                 }
                 current_queue->count--;
-
-                // Use kill_p to properly clean up both process and memory block
                 kill_p(process, kernel_stack_info);
             }
-            // Handle process quantum expiration
             else if (process->quantum_used >= current_queue->quantum) {
                 printf("Process %d used up its quantum, moving to next queue\n", process->pid);
                 process->state = READY;
                 process->quantum_used = 0;
 
-                // Remove process from the queue
                 for (int i = 0; i < current_queue->count - 1; ++i) {
                     current_queue->process_arr[i] = current_queue->process_arr[i + 1];
                 }
                 current_queue->process_arr[current_queue->count - 1] = NULL;
                 current_queue->count--;
 
-                // Demote process to the next queue
                 demote_process(mlfq, process, x);
             }
-            // Process remains in the queue for further execution
             else {
                 process->state = READY;
             }
 
-            // Only process one process per time slice
             break;
         }
     }
